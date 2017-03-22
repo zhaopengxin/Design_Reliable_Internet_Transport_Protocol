@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 int main(int argc, char* argv[]) {
 // ./wReceiver <port-num> <log> <window-size>
 
@@ -55,8 +54,6 @@ int main(int argc, char* argv[]) {
 	int file_num = 1;
 
 	int byteSent, bytesRecvd;
-
-
 	
 	while(1) {
 
@@ -88,7 +85,6 @@ int main(int argc, char* argv[]) {
 					os.open(filename.c_str(), ofstream::binary);
 				}
 
-
 				//out of sliding window
 				if(hdr.seqNum >= sliding_start + window_size) {
 					continue;
@@ -118,7 +114,6 @@ int main(int argc, char* argv[]) {
 				memset(buffer, 0, sizeof(buffer));
 				unsigned int checksum = crc32((void*) data, hdr.length);
 
-
 				//corrupted data
 				if(checksum != hdr.checksum){
 					// cout << checksum << " " << hdr.checksum << "corrupted" << endl;
@@ -126,7 +121,6 @@ int main(int argc, char* argv[]) {
 					delete[] data;
 					continue;
 				} 
-
 
 				RecvLogEntry logEntry;
 				logEntry.packetHeader = hdr;
@@ -188,14 +182,12 @@ int main(int argc, char* argv[]) {
 
 			} else continue;
 
-
 		}
 		os.close();
 
 		file_num++;
 
 	}
-
 
 	return 0;
 }

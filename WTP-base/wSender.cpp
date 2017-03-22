@@ -2,47 +2,6 @@
 
 using namespace std;
 
-// bool send_start_end_msg(int type, int sd, sockaddr_in* server, int server_size) {
-// 	assert(type == 1 || type == 0);
-// 	//1: end; 0: start
-
-// 	PacketHeader hdr = getPacketHeader(type);
-// 	msghdr msg = getMsg(&hdr, sizeof(hdr), NULL, 0,
-// 		server, server_size);
-
-
-// 	auto send_time = chrono::high_resolution_clock::now();
-// 	bool send_first = true;
-// 	while(1) {
-// 		auto curr_time = chrono::high_resolution_clock::now();
-// 		auto dur = curr_time - send_time;
-// 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds> (dur).count();
-// 		if(ms > 500 || send_first) {
-// 			//send start message
-// 			int bytesSent = sendmsg(sd, &msg, 0);	
-// 			if(bytesSent <= 0) {
-// 				cout << "Error using send" << endl;
-// 				return false;
-// 			}
-// 			send_first = false;
-// 		}
-
-// 		//recv start acknowledge
-// 		PacketHeader ack;
-// 		int bytesRecvd = recv(sd, &ack, sizeof(ack), MSG_DONTWAIT);
-// 		if(bytesRecvd > 0) {
-// 			assert(ack.seqNum == hdr.seqNum);
-
-// 			break;
-// 		}
-// 	}
-
-// 	return true;
-// }
-
-
-
-
 int main(int argc, char* argv[]) {
 // ./wSender <input-file> <window-size> <log> <receiver-IP> <receiver-port>
 
@@ -60,12 +19,7 @@ int main(int argc, char* argv[]) {
 
 	ofstream output(string(log_path), std::ofstream::out);
 
-
 	ifstream is(input_file, std::ifstream::binary);
-
-
-
-
 
 	int sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sd < 1) {
@@ -109,9 +63,7 @@ int main(int argc, char* argv[]) {
 			//send start message
 			int bytesSent = sendmsg(sd, &msg, 0);
 			start_send_time = chrono::high_resolution_clock::now();
-
 			//create for logging
-
 			output << hdr.type << " " << hdr.seqNum << " " << hdr.length << " " << hdr.checksum << endl;
 
 			if(bytesSent <= 0) {
@@ -120,36 +72,25 @@ int main(int argc, char* argv[]) {
 			}
 			start_send_first = false;
 		}
-
 		//recv start acknowledge
 		PacketHeader ack;
 		int bytesRecvd = recv(sd, &ack, sizeof(ack), MSG_DONTWAIT);
-
-		
 		if(bytesRecvd > 0) {
 			//create for logging
-
 			output << ack.type << " " << ack.seqNum << " " << ack.length << " " << ack.checksum << endl;
 			assert(ack.seqNum == hdr.seqNum);
-
 			break;
 		}
 	}
 
-
 	int seq = 0;
-
 
 	deque<SendLogEntry> sliding_window;
 
 	chrono::high_resolution_clock::time_point send_time;
 
-
 	while(is || (!sliding_window.empty())) {
-
 		auto curr_time = chrono::high_resolution_clock::now();
-		
-
 		if(!sliding_window.empty()) {
 			auto dur = curr_time - send_time;
 			auto ms = std::chrono::duration_cast<std::chrono::milliseconds> (dur).count();
@@ -157,7 +98,6 @@ int main(int argc, char* argv[]) {
 				//resend
 				char* body = sliding_window[0].data;
 				hdr = sliding_window[0].packetHeader;
-
 				iov[0].iov_base = &hdr;
 				iov[0].iov_len = sizeof(hdr);
 				iov[1].iov_base = body;
@@ -197,7 +137,6 @@ int main(int argc, char* argv[]) {
 			
 			unsigned int checksum = crc32((void *)body, sendsize);
 			hdr = getPacketHeader(2, seq, sendsize, checksum);
-			//cout << hdr.length << " crc: " << checksum << endl;
 
 			iov[0].iov_base = &hdr;
 			iov[0].iov_len = sizeof(hdr);
@@ -212,11 +151,9 @@ int main(int argc, char* argv[]) {
 			logEntry.send_time = chrono::high_resolution_clock::now();
 
 			err = sendmsg(sd, &msg, 0);
-			//cout << "Sent : " << seq <<" " << sliding_window.size() << endl;
 			//create for logging
 
 			output << hdr.type << " " << hdr.seqNum << " " << hdr.length << " " << hdr.checksum << endl;
-
 
 			if(err <= 0) {
 				cout << "Error using sendmsg" << endl;
@@ -228,7 +165,6 @@ int main(int argc, char* argv[]) {
 			}
 
 			sliding_window.push_back(logEntry);
-			//cout << sliding_window.size() << endl;
 
 			seq++;
 
@@ -238,9 +174,7 @@ int main(int argc, char* argv[]) {
 			PacketHeader ack;
 			int bytesRecvd = recv(sd, &ack, sizeof(ack), MSG_DONTWAIT);
 			if(bytesRecvd > 0){
-				//cout << ack.seqNum << endl;
 				//create for logging
-
 				output << ack.type << " " << ack.seqNum << " " << ack.length << " " << ack.checksum << endl;				
 				while(!sliding_window.empty() && 
 						ack.seqNum > sliding_window[0].packetHeader.seqNum) {
@@ -257,9 +191,7 @@ int main(int argc, char* argv[]) {
 
 	}
 
-
 	hdr = getPacketHeader(1);
-
 
 	iov[0].iov_base = &hdr;
 	iov[0].iov_len = sizeof(hdr);
@@ -299,7 +231,6 @@ int main(int argc, char* argv[]) {
 			output << ack.type << " " << ack.seqNum << " " << ack.length << " " << ack.checksum << endl;
 			if(ack.seqNum == hdr.seqNum) {
 				break;
-
 			}
 
 		}
@@ -308,6 +239,5 @@ int main(int argc, char* argv[]) {
 	is.close();
 
 	return 0;
-
 
 }

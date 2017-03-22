@@ -2,50 +2,12 @@
 
 using namespace std;
 
-// bool send_start_end_msg(int type, int sd, sockaddr_in* server, int server_size) {
-// 	assert(type == 1 || type == 0);
-// 	//1: end; 0: start
-
-// 	PacketHeader hdr = getPacketHeader(type);
-// 	msghdr msg = getMsg(&hdr, sizeof(hdr), NULL, 0,
-// 		server, server_size);
-
-
-// 	auto send_time = chrono::high_resolution_clock::now();
-// 	bool send_first = true;
-// 	while(1) {
-// 		auto curr_time = chrono::high_resolution_clock::now();
-// 		auto dur = curr_time - send_time;
-// 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds> (dur).count();
-// 		if(ms > 500 || send_first) {
-// 			//send start message
-// 			int bytesSent = sendmsg(sd, &msg, 0);	
-// 			if(bytesSent <= 0) {
-// 				cout << "Error using send" << endl;
-// 				return false;
-// 			}
-// 			send_first = false;
-// 		}
-
-// 		//recv start acknowledge
-// 		PacketHeader ack;
-// 		int bytesRecvd = recv(sd, &ack, sizeof(ack), MSG_DONTWAIT);
-// 		if(bytesRecvd > 0) {
-// 			assert(ack.seqNum == hdr.seqNum);
-
-// 			break;
-// 		}
-// 	}
-
-// 	return true;
-// }
 struct SendLogEntryOPT {
 	PacketHeader packetHeader;     // 0: START; 1: END; 2: DATA; 3: ACK
     char* data;   // Described below
     std::chrono::high_resolution_clock::time_point send_time;
     bool acked = false;
 };
-
 
 
 int main(int argc, char* argv[]) {
@@ -67,10 +29,6 @@ int main(int argc, char* argv[]) {
 
 
 	ifstream is(input_file, std::ifstream::binary);
-
-
-
-
 
 	int sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sd < 1) {
@@ -138,7 +96,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-
 	int seq = 0;
 
 
@@ -146,11 +103,9 @@ int main(int argc, char* argv[]) {
 
 	chrono::high_resolution_clock::time_point send_time;
 
-
 	while(is || (!sliding_window.empty())) {
 
 		auto curr_time = chrono::high_resolution_clock::now();
-		
 
 		if(!sliding_window.empty()) {
 			for(auto it = sliding_window.begin(); it != sliding_window.end(); it++){
@@ -217,7 +172,7 @@ int main(int argc, char* argv[]) {
 			logEntry.send_time = chrono::high_resolution_clock::now();
 
 			err = sendmsg(sd, &msg, 0);
-			//cout << "Sent : " << seq <<" " << sliding_window.size() << endl;
+
 			//create for logging
 
 			output << hdr.type << " " << hdr.seqNum << " " << hdr.length << " " << hdr.checksum << endl;
@@ -232,7 +187,6 @@ int main(int argc, char* argv[]) {
 			}
 
 			sliding_window.push_back(logEntry);
-			//cout << sliding_window.size() << endl;
 
 			seq++;
 
@@ -242,7 +196,6 @@ int main(int argc, char* argv[]) {
 			PacketHeader ack;
 			int bytesRecvd = recv(sd, &ack, sizeof(ack), MSG_DONTWAIT);
 			if(bytesRecvd > 0){
-				//cout << ack.seqNum << endl;
 				//create for logging
 				int seqNumReci = ack.seqNum;
 				for(auto it = sliding_window.begin(); it != sliding_window.end(); it++){
@@ -265,7 +218,6 @@ int main(int argc, char* argv[]) {
 		}
 
 	}
-
 
 	hdr = getPacketHeader(1);
 

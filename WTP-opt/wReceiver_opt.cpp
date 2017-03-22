@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 int main(int argc, char* argv[]) {
 // ./wReceiver <port-num> <log> <window-size>
 
@@ -55,8 +54,6 @@ int main(int argc, char* argv[]) {
 	int file_num = 1;
 
 	int byteSent, bytesRecvd;
-
-
 	
 	while(1) {
 
@@ -90,7 +87,6 @@ int main(int argc, char* argv[]) {
 					os.open(filename.c_str(), ofstream::binary);
 				}
 
-
 				//out of sliding window
 				if(hdr.seqNum < sliding_start) {
 					PacketHeader ack = getPacketHeader(3, hdr.seqNum);
@@ -98,7 +94,6 @@ int main(int argc, char* argv[]) {
 
 					byteSent = sendto(sd, &ack, sizeof(ack), 0, (struct sockaddr *) &clientAddr,
 						 sizeof(clientAddr));
-
 
 					output << ack.type << " " << ack.seqNum << " " << ack.length << " " << ack.checksum << endl;
 					if(byteSent <= 0) {
@@ -118,7 +113,6 @@ int main(int argc, char* argv[]) {
 				}
 				if(found) {
 					PacketHeader ack = getPacketHeader(3, hdr.seqNum);
-					//cout << "ack seqNum:" << hdr.seqNum << endl;
 
 					byteSent = sendto(sd, &ack, sizeof(ack), 0, (struct sockaddr *) &clientAddr,
 						 sizeof(clientAddr));
@@ -132,11 +126,9 @@ int main(int argc, char* argv[]) {
 				}
 
 				char* data = new char[sizeof(buffer)];
-				//strncpy(data, buffer, hdr.length);
 				memcpy(data, buffer, hdr.length);
 				memset(buffer, 0, sizeof(buffer));
 				unsigned int checksum = crc32((void*) data, hdr.length);
-
 
 				//corrupted data
 				if(checksum != hdr.checksum){
@@ -168,15 +160,13 @@ int main(int argc, char* argv[]) {
 								break;
 							}
 						}
-						//cout << found << "found" << endl;
 						if(!found) break;
 					}
 					sliding_start += i;
 				}
 
 				PacketHeader ack = getPacketHeader(3, hdr.seqNum);
-				//cout << "ack seqNum:" << sliding_start << endl;
-
+				
 				byteSent = sendto(sd, &ack, sizeof(ack), 0, (struct sockaddr *) &clientAddr,
 					 sizeof(clientAddr));
 
@@ -205,14 +195,12 @@ int main(int argc, char* argv[]) {
 
 			} else continue;
 
-
 		}
 		os.close();
 
 		file_num++;
 
 	}
-
 
 	return 0;
 }

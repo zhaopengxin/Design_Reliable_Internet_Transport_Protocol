@@ -17,7 +17,7 @@
 * `receiver-IP` The IP address of the host that `wReceiver` is running on.
 * `receiver-port` The port number on which `wReceiver` is listening.
 
-###Logging
+### Logging
 `wSender` should create a log of its activity. After sending or receiving each packet, it should append the following line to the log (i.e., everything except the `data` of the `packet` structure described earlier):
 
 `<type> <seqNum> <length> <checksum>`
